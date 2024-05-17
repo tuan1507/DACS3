@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_baseline_home_24"
+            android:title="@string/menu_home" />
+        <item
+            android:id="@+id/nav_Product"
+            android:icon="@drawable/ic_baseline_shopping_basket_24"
+            android:title="@string/menu_Product" />
+        <item
+            android:id="@+id/nav_Food"
+            android:icon="@drawable/ic_baseline_shopping_basket_24"
+            android:title="@string/menu_food" />
+        <item
+            android:id="@+id/nav_Bill"
+            android:icon="@drawable/ic_baseline_receipt_long_24"
+            android:title="@string/menu_Bill" />
+        <item
+            android:id="@+id/nav_statistic"
+            android:icon="@drawable/ic_baseline_attach_money_24"
+            android:title="@string/menu_statistic" />
+
+    </group>
+</menu>

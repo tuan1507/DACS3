@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "599109793397",
+    "firebase_url": "https://dacs3shop-default-rtdb.firebaseio.com",
+    "project_id": "dacs3shop",
+    "storage_bucket": "dacs3shop.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:599109793397:android:69e70e8b6e8315c692aa3c",
+        "android_client_info": {
+          "package_name": "com.example.dacs3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnNrG9yGYs_2UOoNbvCoIwHVF2a-1Su7U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
