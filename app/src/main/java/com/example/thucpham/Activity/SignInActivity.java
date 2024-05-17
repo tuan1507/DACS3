@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SignInActivity extends AppCompatActivity implements View.OnClickListener {
-    private final String TAG = "SignInActivity";
+    private final String TAG = "SignInActivity"; // Tag ghi log.
     private LinearLayout layoutSignUp;
     private TextInputLayout formEmail, formPassword;
     private Button btnSignIn;
@@ -40,107 +40,81 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
         initUI();
-        getDataSpf();
+        getDataFromSharedPreferences();
         getSupportActionBar().hide();
     }
-
-    private void setOnclickListener() {
-        layoutSignUp.setOnClickListener(this::onClick);
-        btnSignIn.setOnClickListener(this::onClick);
-    }
-
 
     private void initUI() {
         layoutSignUp = findViewById(R.id.layout_SignInActivity_signIn);
         btnSignIn = findViewById(R.id.btn_SignInActivity_signIn);
         progressBar = findViewById(R.id.progressBar_SignInActivity_loadingLogin);
-        progressBar.setVisibility(View.INVISIBLE);
         formEmail = findViewById(R.id.form_SignInActivity_email);
         formPassword = findViewById(R.id.form_SignInActivity_password);
-        formPassword.setErrorEnabled(true);
-        formEmail.setErrorEnabled(true);
         mChkRemember = findViewById(R.id.chk_sign_in_activity_remember);
-        setOnclickListener();
+        progressBar.setVisibility(View.INVISIBLE);
+        layoutSignUp.setOnClickListener(this);
+        btnSignIn.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.layout_SignInActivity_signIn:
-                Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
-                startActivity(intent);
+                startActivity(new Intent(SignInActivity.this, SignUpActivity.class));
                 break;
             case R.id.btn_SignInActivity_signIn:
-                if (!logins()){
-                    userLogin();
-                }
-                logins();
-                break;
-            default:
-                Toast.makeText(this, "Chức năng đang phát triển", Toast.LENGTH_SHORT).show();
+                if (login()) return;
                 break;
         }
     }
 
-    private void userLogin() {
+    private boolean login() {
+        String email = formEmail.getEditText().getText().toString().trim();
+        String password = formPassword.getEditText().getText().toString().trim();
+
+        if (email.equals("admin") && password.equals("admin")) {
+            rememberUser("admin", "admin", email, password);
+            startMainActivity();
+            return true;
+        } else {
+            userLogin(email, password);
+            return false;
+        }
+    }
+
+    private void userLogin(String phoneNumber, String passwordUser) {
         formEmail.setError(null);
         formPassword.setError(null);
-        String phoneNumber = formEmail.getEditText().getText().toString().trim();
-        String passwordUser = formPassword.getEditText().getText().toString().trim();
+
         if (!validate(phoneNumber, passwordUser)) return;
+
         progressBar.setVisibility(View.VISIBLE);
         final DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
-        rootReference.child("User").child(phoneNumber)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        progressBar.setVisibility(View.INVISIBLE);
-                        if (snapshot.exists()) {
-                            String password = snapshot.child("password").getValue(String.class);
-                            if (password.equals(passwordUser)) {
-                                //TODO ĐĂNG NHẬP VÀO APP
-                                remember("user", phoneNumber);
-                                Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-                                startActivity(intent);
-                                finishAffinity();
-                                return;
-                            }
-                            //TODO THÔNG BÁO MẬT KHẨU KHÔNG ĐÚNG
-                            formPassword.setError("Mật khẩu không đúng");
-                            return;
-                        }
-                        //TODO THÔNG BÁO TÀI KHOẢN CHƯA TỒN TẠI
-                        formEmail.setError("Tài khoản không tồn tại");
+        rootReference.child("User").child(phoneNumber).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                progressBar.setVisibility(View.INVISIBLE);
+                if (snapshot.exists()) {
+                    String password = snapshot.child("password").getValue(String.class);
+                    if (password.equals(passwordUser)) {
+                        rememberUser("user", phoneNumber, phoneNumber, passwordUser);
+                        startMainActivity();
+                    } else {
+                        formPassword.setError("Mật khẩu không đúng");
                     }
+                } else {
+                    formEmail.setError("Tài khoản không tồn tại");
+                }
+            }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        //TODO THÔNG BÁO LỖI KHI ĐĂNG NHẬP
-                        progressBar.setVisibility(View.INVISIBLE);
-                        Log.e(TAG, "onCancelled: ", error.toException());
-                    }
-                });
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
     }
 
-
-    public boolean logins(){
-        //TODO validate partner login
-        String email = formEmail.getEditText().getText().toString().trim();
-        String password = formPassword.getEditText().getText().toString().trim();
-        if (email.equals("admin") && password.equals("admin") ){
-            remember("admin", "admin");
-            Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-            startActivity(intent);
-            finishAffinity();
-            return true;
-        }
-        return false;
-    }
-
-    public void remember(String role, String id){
-        String email = formEmail.getEditText().getText().toString().trim();
-        String password = formPassword.getEditText().getText().toString().trim();
-        SharedPreferences sharedPreferences = getSharedPreferences("My_User",MODE_PRIVATE);
+    private void rememberUser(String role, String id, String email, String password) {
+        SharedPreferences sharedPreferences = getSharedPreferences("My_User", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("username", email);
         editor.putString("password", password);
@@ -150,42 +124,33 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         editor.apply();
     }
 
-    public void getDataSpf(){
-        SharedPreferences sharedPreferences = getSharedPreferences("My_User",MODE_PRIVATE);
-        boolean isRemember = sharedPreferences.getBoolean("remember",false);
+    private void getDataFromSharedPreferences() {
+        SharedPreferences sharedPreferences = getSharedPreferences("User_file", MODE_PRIVATE);
+        boolean isRemember = sharedPreferences.getBoolean("remember", false);
         if (isRemember) {
-            formEmail.getEditText().setText(sharedPreferences.getString("username",""));
-            formPassword.getEditText().setText(sharedPreferences.getString("password",""));
+            formEmail.getEditText().setText(sharedPreferences.getString("username", ""));
+            formPassword.getEditText().setText(sharedPreferences.getString("password", ""));
         }
     }
 
     private boolean validate(String email, String password) {
-        try {
-            if (email.isEmpty() && password.isEmpty()) throw new IllegalArgumentException("email and password is empty");
-            else if (email.isEmpty()) throw new IllegalArgumentException("email is empty");
-            else if (password.isEmpty()) throw new IllegalArgumentException("password is empty");
-            else if (password.length() < 6) throw new IllegalArgumentException(Profile.PASSWORD_INVALID);
-        } catch (IllegalArgumentException e) {
-            if (e.getMessage().equals("email and password is empty")) {
-                formEmail.setError("Không được bỏ trống số điện thoại");
-                formPassword.setError("Không được bỏ trống mật khẩu");
-            } else if (e.getMessage().equals("email is empty")) {
-                formEmail.setError("Không được bỏ trống số điện thoại");
-            } else if (e.getMessage().equals("password is empty")) {
-                formPassword.setError("Không được bỏ trống mật khẩu");
-            } else if (e.getMessage().equals(Profile.PASSWORD_INVALID)) {
-                formPassword.setError("Mật khẩu phải từ 6 kí tự trở lên");
-            }
-            Log.e(TAG, "validate: ", e);
+        if (email.isEmpty() && password.isEmpty()) {
+            formEmail.setError("Không được bỏ trống số điện thoại");
+            formPassword.setError("Không được bỏ trống mật khẩu");
+            return false;
+        } else if (email.isEmpty()) {
+            formEmail.setError("Không được bỏ trống số điện thoại");
+            return false;
+        } else if (password.isEmpty()) {
+            formPassword.setError("Không được bỏ trống mật khẩu");
             return false;
         }
         return true;
-
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop: đang stop");
+    private void startMainActivity() {
+        Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+        startActivity(intent);
+        finishAffinity();
     }
 }
